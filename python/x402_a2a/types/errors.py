@@ -144,6 +144,53 @@ class x402PaymentRequiredException(x402Error):
 
         return cls(message=message or description, payment_requirements=requirements)
 
+    @classmethod
+    def for_solana_service(
+        cls,
+        price: str,  # Amount in atomic units
+        pay_to_address: str,
+        asset_address: str,
+        resource: str,
+        fee_payer_address: str,
+        network: str = "solana-devnet",
+        description: str = "Payment required for this service",
+        decimals: int = 6,
+        message: Optional[str] = None,
+    ) -> "x402PaymentRequiredException":
+        """Create payment exception for a Solana service.
+
+        Helper method for Solana payment requirements.
+
+        Args:
+            price: Payment amount in atomic units (e.g., "1000000" for 1 USDC)
+            pay_to_address: Solana public key to receive payment
+            asset_address: SPL token mint address
+            resource: Resource identifier (e.g., "/api/generate")
+            fee_payer_address: Facilitator's public key (pays transaction fees)
+            network: Solana network ("solana" or "solana-devnet")
+            description: Human-readable description
+            decimals: Token decimals (6 for USDC)
+            message: Exception message (default: uses description)
+
+        Returns:
+            x402PaymentRequiredException with Solana payment requirement
+        """
+        # Import here to avoid circular imports
+        from ..core.solana_merchant import create_solana_payment_requirements
+
+        requirements = create_solana_payment_requirements(
+            price=price,
+            pay_to_address=pay_to_address,
+            asset_address=asset_address,
+            resource=resource,
+            fee_payer_address=fee_payer_address,
+            network=network,
+            description=description,
+            decimals=decimals,
+        )
+
+        return cls(message=message or description, payment_requirements=requirements)
+
 
 class x402ErrorCode:
     """Standard error codes from spec Section 8.1."""

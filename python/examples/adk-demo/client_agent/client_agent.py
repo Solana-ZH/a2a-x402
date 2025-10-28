@@ -227,15 +227,43 @@ You are a master orchestrator agent. Your job is to complete user requests by de
                         if isinstance(part_root, TextPart):
                             final_text.append(part_root.text)
 
-            if final_text:
-                return " ".join(final_text)
-
-            # Fallback for tasks with no text artifacts (e.g., payment settlement)
+            # Check if payment was completed and add transaction details
             if (
                 self.x402.get_payment_status(response_task)
                 == PaymentStatus.PAYMENT_COMPLETED
             ):
-                return "Payment successful! Your purchase is complete."
+                # Get the settlement receipt to show transaction details
+                receipt = self.x402.get_latest_receipt(response_task)
+                if receipt and receipt.transaction:
+                    tx_sig = receipt.transaction
+                    network = receipt.network
+                    
+                    # Build explorer link for Solana transactions
+                    if "solana" in network.lower():
+                        cluster = "devnet" if "devnet" in network.lower() else ""
+                        explorer_url = f"https://explorer.solana.com/tx/{tx_sig}"
+                        if cluster:
+                            explorer_url += f"?cluster={cluster}"
+                        
+                        transaction_details = (
+                            f"\n\n🎉 Paid with Solana USDC! 🍌\n"
+                            f"🔗 Transaction: {tx_sig}\n"
+                            f"🌐 View on Explorer: {explorer_url}"
+                        )
+                    else:
+                        # EVM transaction
+                        transaction_details = (
+                            f"\n\nTransaction: {tx_sig}"
+                        )
+                    
+                    # Append transaction details to merchant's message
+                    if final_text:
+                        return " ".join(final_text) + transaction_details
+                    else:
+                        return f"Payment successful! Your purchase is complete.{transaction_details}"
+
+            if final_text:
+                return " ".join(final_text)
 
             return f"Task with {agent_name} is {response_task.status.state.value}."
 

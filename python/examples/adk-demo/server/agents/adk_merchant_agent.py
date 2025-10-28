@@ -42,47 +42,67 @@ class AdkMerchantAgent(BaseAgent):
         self.x402 = x402Utils()
 
     def _get_product_price(self, product_name: str) -> str:
-        """Generates a deterministic price for a product."""
-        price = (
-            int(hashlib.sha256(product_name.lower().encode()).hexdigest(), 16)
-            % 99900001
-            + 100000
-        )
-        return str(price)
+        """Returns a fixed tiny price for testing (0.005 USDC = 5000 atomic units)."""
+        return "5000"  # 0.005 USDC
 
     def get_product_details_and_request_payment(self, product_name: str) -> dict:
         """
         This is the agent's tool. Instead of returning payment details, it raises
         an exception to signal to the x402 wrapper that payment is needed.
+        Supports both Solana and EVM chains based on PAYMENT_NETWORK env var.
         """
         if not product_name:
             return {"error": "Product name cannot be empty."}
 
         price = self._get_product_price(product_name)
-        requirements = PaymentRequirements(
-            scheme="exact",
-            network="base-sepolia",
-            asset="0x036CbD53842c5426634e7929541eC2318f3dCF7e",
-            pay_to=self._wallet_address,
-            max_amount_required=price,
-            description=f"Payment for: {product_name}",
-            resource=f"https://example.com/product/{product_name}",
-            mime_type="application/json",
-            max_timeout_seconds=1200,
-            extra={
-                "name": "USDC",
-                "version": "2",
-                "product": {
-                    "sku": f"{product_name}_sku",
-                    "name": product_name,
-                    "version": "1",
+        
+        # Determine which payment network to use (defaults to Solana)
+        import os
+        payment_network = os.getenv("PAYMENT_NETWORK", "solana").lower()
+        
+        if payment_network == "evm":
+            # EVM (Base Sepolia) payment requirements
+            requirements = PaymentRequirements(
+                scheme="exact",
+                network="base-sepolia",
+                asset="0x036CbD53842c5426634e7929541eC2318f3dCF7e",  # USDC on Base Sepolia
+                pay_to=self._wallet_address,
+                max_amount_required=price,
+                description=f"Payment for: {product_name}",
+                resource=f"https://example.com/product/{product_name}",
+                mime_type="application/json",
+                max_timeout_seconds=1200,
+                extra={
+                    "name": "USDC",
+                    "version": "2",
+                    "product": {
+                        "sku": f"{product_name}_sku",
+                        "name": product_name,
+                        "version": "1",
+                    },
                 },
-            },
-        )
-
-        # Signal to the x402ServerAgentExecutor that payment is required.
-        # The wrapper will catch this and handle the A2A flow.
-        raise x402PaymentRequiredException(product_name, requirements)
+            )
+            raise x402PaymentRequiredException(product_name, requirements)
+        else:
+            # Solana payment requirements (default)
+            merchant_address = os.getenv(
+                "MERCHANT_SOLANA_PUBKEY",
+                "BzTes76rrZTfZnVVn7kPaqsAB8uaw3My4LB4UZmMFMiB"  # Default demo address
+            )
+            
+            # Use Solana-specific helper to create requirements
+            # This bypasses upstream validation and includes Solana-specific fields
+            raise x402PaymentRequiredException.for_solana_service(
+                price=str(price),
+                pay_to_address=merchant_address,
+                asset_address="4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU",  # USDC devnet
+                resource=f"https://example.com/product/{product_name}",
+                # Use a valid dummy public key - facilitator will replace with its own when building the transaction
+                fee_payer_address="11111111111111111111111111111111",  # System program (valid dummy address)
+                network="solana-devnet",
+                description=f"Payment for: {product_name}",
+                decimals=6,
+            )
 
     def before_agent_callback(self, callback_context: CallbackContext):
         """

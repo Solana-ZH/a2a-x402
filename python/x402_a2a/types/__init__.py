@@ -54,6 +54,13 @@ from .errors import (
 )
 
 from .config import X402_EXTENSION_URI, x402ExtensionConfig, x402ServerConfig
+from .solana import (
+    SolanaSupportedNetworks,
+    SolanaPaymentPayload,
+    SolanaPaymentRequirementsExtra,
+    SolanaSettleResponse,
+    SolanaVerifyResponse,
+)
 from ..extension import (
     get_extension_declaration,
     check_extension_activation,
@@ -97,6 +104,11 @@ __all__ = [
     "X402_EXTENSION_URI",
     "x402ExtensionConfig",
     "x402ServerConfig",
+    "SolanaSupportedNetworks",
+    "SolanaPaymentPayload",
+    "SolanaPaymentRequirementsExtra",
+    "SolanaSettleResponse",
+    "SolanaVerifyResponse",
     "get_extension_declaration",
     "check_extension_activation",
     "add_extension_activation_header",

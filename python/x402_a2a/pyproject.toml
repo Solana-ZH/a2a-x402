@@ -12,12 +12,14 @@ requires-python = ">=3.11"
 keywords = ["a2a", "x402", "payments", "ethereum", "coinbase", "google"]
 dependencies = [
     "a2a-sdk",  # For A2A protocol integration
-    "x402>=0.2.0",  # For x402 payment protocol
+    "x402 @ git+https://github.com/Woody4618/x402@solana-python#subdirectory=python/x402",  # For x402 with Solana support
     "eth-account>=0.13.7",  # For Ethereum account management
     "httpx>=0.28.1",  # For async HTTP client
     "pydantic>=2.0.0",  # For data validation
     "pytest>=8.4.1",  # For testing
     "pytest-asyncio>=1.1.0",
+    "solana>=0.36.0",  # For Solana payments
+    "solders>=0.21.0",  # For Solana types
 ]
 
 [dependency-groups]

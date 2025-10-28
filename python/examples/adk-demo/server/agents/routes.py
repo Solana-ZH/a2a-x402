@@ -36,7 +36,7 @@ from .base_agent import BaseAgent
 from .adk_merchant_agent import AdkMerchantAgent
 
 # The concrete x402 executor wrappers
-from .x402_merchant_executor import x402MerchantExecutor
+from .multi_chain_executor import MultiChainMerchantExecutor
 
 
 # A dictionary mapping the URL path to the agent factory
@@ -99,8 +99,8 @@ def _create_routes(
     # 1. Create the base executor that runs the ADK agent.
     agent_executor = ADKAgentExecutor(runner, agent_card)
 
-    # 2. Apply the concrete x402 merchant wrapper.
-    agent_executor = x402MerchantExecutor(agent_executor)
+    # 2. Apply the concrete x402 merchant wrapper (multi-chain).
+    agent_executor = MultiChainMerchantExecutor(agent_executor)
 
     # 3. Create the request handler with the final, fully wrapped executor.
     request_handler = DefaultRequestHandler(

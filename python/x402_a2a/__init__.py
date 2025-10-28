@@ -74,6 +74,12 @@ from .core import (
     check_payment_context,
     # Agent utilities
     create_x402_agent_card,
+    # Solana support
+    process_solana_payment_required,
+    process_solana_payment,
+    SolanaFacilitator,
+    create_solana_payment_requirements,
+    SolanaPaymentRequirements,
 )
 
 # Optional Middleware
@@ -136,6 +142,12 @@ __all__ = [
     "check_payment_context",
     # Agent utilities
     "create_x402_agent_card",
+    # Solana support
+    "process_solana_payment_required",
+    "process_solana_payment",
+    "SolanaFacilitator",
+    "create_solana_payment_requirements",
+    "SolanaPaymentRequirements",
     # Optional Middleware
     "x402BaseExecutor",
     "x402ServerExecutor",

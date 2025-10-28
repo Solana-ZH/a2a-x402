@@ -27,6 +27,11 @@ from .helpers import (
 )
 from .agent import create_x402_agent_card
 
+# Solana-specific implementations
+from .solana_wallet import process_solana_payment_required, process_solana_payment
+from .solana_facilitator import SolanaFacilitator
+from .solana_merchant import create_solana_payment_requirements, SolanaPaymentRequirements
+
 __all__ = [
     # Core merchant/wallet functions
     "create_payment_requirements",
@@ -48,4 +53,10 @@ __all__ = [
     "check_payment_context",
     # Agent utilities
     "create_x402_agent_card",
+    # Solana support
+    "process_solana_payment_required",
+    "process_solana_payment",
+    "SolanaFacilitator",
+    "create_solana_payment_requirements",
+    "SolanaPaymentRequirements",
 ]
