@@ -887,7 +887,7 @@ async def handle_payment_requirements(task: Task, account: Account):
     
     # Use x402Client for payment selection and signing
     from x402.clients.base import x402Client
-    client = x402Client(account=account, max_value=1000000)
+    client = x402Client(account=account, max_value=100)
     
     # Select payment requirement from accepts array
     selected_requirement = client.select_payment_requirements(payment_required.accepts)
@@ -1065,7 +1065,7 @@ Use executors for automatic payment handling with exceptions:
 
 ```python
 # Server-side middleware
-from x402_a2a.executors import x402ServerExecutor, x402ClientExecutor
+from x402_a2a.executors import x402ServerExecutor
 from x402_a2a import (
     x402ExtensionConfig,
     X402_EXTENSION_URI,
@@ -1090,12 +1090,6 @@ class MyAgent:
                 resource="/premium-feature"
             )
         # Regular logic continues...
-
-client_executor = x402ClientExecutor(
-    delegate=client_executor,
-    config=config,
-    account=Account.from_key(private_key)
-)
 ```
 
 ## 11. Error Handling

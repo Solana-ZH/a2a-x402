@@ -60,9 +60,6 @@ class x402ServerExecutor(x402BaseExecutor, metaclass=ABCMeta):
         )
     """
 
-    # Class-level store to persist across requests for a single server instance.
-    _payment_requirements_store: Dict[str, List[PaymentRequirements]] = {}
-
     def __init__(
         self,
         delegate: AgentExecutor,
@@ -75,6 +72,7 @@ class x402ServerExecutor(x402BaseExecutor, metaclass=ABCMeta):
             config: x402 extension configuration
         """
         super().__init__(delegate, config)
+        self._payment_requirements_store: Dict[str, List[PaymentRequirements]] = {}
 
     @abstractmethod
     async def verify_payment(
@@ -92,8 +90,8 @@ class x402ServerExecutor(x402BaseExecutor, metaclass=ABCMeta):
 
     async def execute(self, context: RequestContext, event_queue: EventQueue):
         """Payment middleware: verify → execute service → settle."""
-        # The wrapper MUST take responsibility for starting the task.
-        # This ensures the task exists in the TaskManager before the delegate runs.
+        if not context.task_id or not context.context_id:
+            raise ValueError("Task ID and Context ID cannot be None")
         updater = TaskUpdater(event_queue, context.task_id, context.context_id)
         if not context.current_task:
             await updater.submit()
@@ -101,16 +99,25 @@ class x402ServerExecutor(x402BaseExecutor, metaclass=ABCMeta):
 
         task = context.current_task or Task(
             id=context.task_id,
-            contextId=context.context_id,
+            context_id=context.context_id,
             status=TaskStatus(state=TaskState.working),
         )
         self.utils.get_payment_status(task)
 
-        if (
+        payment_status_task = (
             self.utils.get_payment_status_from_task(context.current_task)
-            == PaymentStatus.PAYMENT_SUBMITTED
-            or self.utils.get_payment_status_from_message(context.message)
-            == PaymentStatus.PAYMENT_SUBMITTED
+            if context.current_task
+            else None
+        )
+        payment_status_message = (
+            self.utils.get_payment_status_from_message(context.message)
+            if context.message
+            else None
+        )
+
+        if (
+            payment_status_task == PaymentStatus.PAYMENT_SUBMITTED
+            or payment_status_message == PaymentStatus.PAYMENT_SUBMITTED
         ):
             return await self._process_paid_request(context, event_queue)
 
@@ -134,9 +141,12 @@ class x402ServerExecutor(x402BaseExecutor, metaclass=ABCMeta):
             f"✅ Received payment payload. Beginning verification for task: {task.id}"
         )
 
-        payment_payload = self.utils.get_payment_payload(
-            task
-        ) or self.utils.get_payment_payload_from_message(context.message)
+        payment_payload = (
+            self.utils.get_payment_payload(task)
+            or self.utils.get_payment_payload_from_message(context.message)
+            if context.message
+            else None
+        )
         if not payment_payload:
             logger.warning(
                 "Payment payload missing from both task and message metadata."
@@ -208,7 +218,7 @@ class x402ServerExecutor(x402BaseExecutor, metaclass=ABCMeta):
         task.metadata["x402_payment_verified"] = True
         logger.info("Set x402_payment_verified=True in task.metadata")
 
-        if (
+        if task.status.message is not None and (
             not hasattr(task.status.message, "metadata")
             or not task.status.message.metadata
         ):
@@ -300,9 +310,12 @@ class x402ServerExecutor(x402BaseExecutor, metaclass=ABCMeta):
             )
             return None
 
-        payment_payload = self.utils.get_payment_payload(
-            task
-        ) or self.utils.get_payment_payload_from_message(context.message)
+        payment_payload = (
+            self.utils.get_payment_payload(task)
+            or self.utils.get_payment_payload_from_message(context.message)
+            if context.message
+            else None
+        )
         if not payment_payload:
             logger.warning("Could not extract payment payload from task or message.")
             return None
@@ -325,14 +338,14 @@ class x402ServerExecutor(x402BaseExecutor, metaclass=ABCMeta):
             # If the task object isn't in the context (e.g., on the first turn),
             # create a temporary one using the IDs from the context. The TaskManager
             # will find the real task using the ID.
-            if not context.task_id:
+            if not context.task_id or not context.context_id:
                 raise ValueError(
-                    "Cannot handle payment exception: task_id is missing from the context."
+                    "Cannot handle payment exception: task_id or context_id is missing from the context."
                 )
 
             task = Task(
                 id=context.task_id,
-                contextId=context.context_id,
+                context_id=context.context_id,
                 status=TaskStatus(state=TaskState.input_required),
                 metadata={},
             )

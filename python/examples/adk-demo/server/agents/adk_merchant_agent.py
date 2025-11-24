@@ -42,8 +42,13 @@ class AdkMerchantAgent(BaseAgent):
         self.x402 = x402Utils()
 
     def _get_product_price(self, product_name: str) -> str:
-        """Returns a fixed tiny price for testing (0.005 USDC = 5000 atomic units)."""
-        return "5000"  # 0.005 USDC
+        """Generates a deterministic price for a product."""
+        price = (
+            int(hashlib.sha256(product_name.lower().encode()).hexdigest(), 16)
+            % 99900001
+            + 5000
+        )
+        return str(price)
 
     def get_product_details_and_request_payment(self, product_name: str) -> dict:
         """
