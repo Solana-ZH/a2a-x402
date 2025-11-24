@@ -72,7 +72,7 @@ def main():
     print(f"   # For client")
     print(f"   spl-token create-account 4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU --owner {client.pubkey()}")
     print()
-    print("5. Fund the CLIENT with devnet USDC (You can get that from here: https://faucet.circle.com/)")
+    print(f"5. Fund the CLIENT {client.pubkey()}  with devnet USDC (You can get that from here: https://faucet.circle.com/)")
     print(f"   Client's USDC account will need tokens to make payments")
     print()
     print("🔗 Devnet USDC Mint: 4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU")

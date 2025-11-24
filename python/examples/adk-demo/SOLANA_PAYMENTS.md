@@ -10,7 +10,7 @@ This implementation adds Solana support to the x402 payment protocol, enabling a
 
 - ✅ **SPL Token Payments**: Pay with USDC or any SPL token
 - ✅ **Client Pays Fees**: In this implementation, the client pays both the token transfer and transaction fees
-- ✅ **Fully-Signed Transactions**: Client signs the complete transaction (no partial signing needed)
+- ✅ **Fully-Signed Transactions**: Client signs the complete transaction (no partial signing)
 - ✅ **Mock Mode**: Test without blockchain for development
 - ✅ **Devnet Ready**: Real transactions on Solana devnet
 
@@ -21,7 +21,7 @@ Test the flow without needing any blockchain setup:
 ### 1. Install Dependencies
 
 ```bash
-cd /Users/jonasmac2/Documents/GitHub/a2a-x402/python/examples/adk-demo
+cd /a2a-x402/python/examples/adk-demo
 uv sync
 ```
 
@@ -62,7 +62,7 @@ To send actual transactions on Solana devnet:
 ### 1. Generate Keys
 
 ```bash
-cd /Users/jonasmac2/Documents/GitHub/a2a-x402/python/examples/adk-demo
+cd /a2a-x402/python/examples/adk-demo
 uv run python setup_solana_keys.py
 ```
 
@@ -123,7 +123,7 @@ spl-token create-account $USDC_MINT --owner <CLIENT_PUBKEY> --url devnet
 
 ### 5. Fund Client with USDC
 
-The client needs USDC to make payments:
+The client address needs USDC to make payments:
 
 ```bash
 # Use Circle's devnet USDC faucet
@@ -195,23 +195,11 @@ Client                  Merchant                Facilitator         Solana Netwo
 
 ### Key Concepts
 
-**Fully-Signed Transactions**:
-
-- Client signs the complete transaction including the SPL token transfer
-- Client is both the transfer authority and fee payer
-- Simple, straightforward model with no partial signing complexity
-
 **Associated Token Accounts (ATAs)**:
 
 - SPL tokens are held in ATAs derived from `owner + mint`
 - Both client and merchant need ATAs for the token being transferred
 - Must be created before first transaction
-
-**Fee Payment**:
-
-- Client pays SOL transaction fees (~0.00025 SOL per transaction)
-- Client needs both SPL tokens (e.g., USDC) for payment and SOL for fees
-- Simple implementation without facilitator fee payment complexity
 
 ---
 
@@ -289,36 +277,6 @@ solders>=0.21.0  # Solana types (Keypair, Transaction, etc.)
 base58>=2.1.1    # Key format support
 ```
 
----
-
-## Troubleshooting
-
-### "insufficient funds"
-
-- **Client**: Needs USDC to make payments AND SOL for transaction fees
-  - Solution for USDC: Fund via Circle's faucet or transfer USDC
-  - Solution for SOL: `solana airdrop 2 <CLIENT_PUBKEY> --url devnet`
-
-### "Account does not exist" / "InvalidAccountData"
-
-- Token accounts (ATAs) don't exist yet
-- Solution: Create ATAs for both client and merchant:
-  ```bash
-  spl-token create-account 4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU --owner <PUBKEY> --url devnet
-  ```
-
-### "Blockhash not found"
-
-- Transaction blockhash expired (max ~60 seconds on Solana)
-- Usually happens with public RPC rate limits
-- Solution: Use a paid RPC endpoint (QuickNode, Helius, etc.)
-
-### No transaction link in output
-
-- Make sure you restarted the client after code changes
-- Check that `.env` file is loaded correctly
-
----
 
 ## Testing
 
@@ -328,20 +286,6 @@ base58>=2.1.1    # Key format support
 | ---- | -------------------- | ------------------------------------- |
 | Mock | `true`               | Simulates transactions, no blockchain |
 | Real | `false`              | Sends actual transactions to devnet   |
-
-Mock mode is perfect for:
-
-- ✅ Development and testing
-- ✅ No blockchain setup needed
-- ✅ Instant responses
-- ✅ No transaction costs
-
-Real mode for:
-
-- ✅ End-to-end testing
-- ✅ Transaction verification
-- ✅ Integration testing
-- ✅ Production readiness
 
 ---
 
@@ -382,17 +326,6 @@ def get_product_details(product_name: str) -> dict:
 - [A2A Protocol](https://www.a2a-protocol.org/)
 - [Solana Devnet Faucet](https://faucet.solana.com)
 - [Circle USDC Faucet](https://faucet.circle.com/)
-
----
-
-## Next Steps
-
-- [ ] Test in mock mode first
-- [ ] Generate and fund real devnet keys
-- [ ] Make your first devnet transaction
-- [ ] Experiment with different token amounts
-- [ ] Try multi-product purchases
-- [ ] Contribute improvements upstream to `coinbase/x402`
 
 ---
 

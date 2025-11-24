@@ -84,9 +84,6 @@ The Solana implementation includes:
 
 - ✅ Mock mode for testing without blockchain
 - ✅ Real devnet transactions with SPL tokens
-- ✅ Client pays transaction fees (clients need small amount of SOL for fees)
-- ✅ Transaction explorer links
-- ✅ Multi-chain wallet support (EVM + Solana)
 
 Quick start:
 
